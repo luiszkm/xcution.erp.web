@@ -1,14 +1,16 @@
 import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import type { LoginConfig } from '../models/login-config.model';
 import type { LoginCommand, LoginViewState } from '../models/login.model';
 import { DefaultLoginView } from '../views/default-login.view';
 import { BrandedLoginView } from '../views/branded-login.view';
+import { TenantContextService } from '../../../../core/tenant/tenant-context.service';
 
-import { AuthApiService } from '../data-access/auth-api.service';
-import { AuthStore } from '../../../../core/auth/auth.store';
+import { AUTH_API } from '../data-access/auth-api.token';
+import type { AuthApi } from '../data-access/auth-api.token';
 
 @Component({
   standalone: true,
@@ -46,8 +48,11 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 })
 export class LoginPage {
   private readonly route = inject(ActivatedRoute);
-  private readonly authApi = inject(AuthApiService);
-  private readonly authStore = inject(AuthStore);
+  private readonly router = inject(Router);
+
+  private readonly authApi: AuthApi = inject(AUTH_API);
+  private readonly auth = inject(AuthService);
+  private readonly tenant = inject(TenantContextService);
 
   readonly loginConfig =
     this.route.snapshot.data['loginConfig'] as LoginConfig | undefined;
@@ -62,8 +67,7 @@ export class LoginPage {
     try {
       const res = await firstValueFrom(this.authApi.login(cmd));
 
-      // TODO: quando você tiver /me, substitui user placeholder pelo real.
-      this.authStore.setSession(
+      this.auth.setSession(
         {
           id: 'temp',
           name: cmd.email,
@@ -75,8 +79,11 @@ export class LoginPage {
       );
 
       this.state.set({ status: 'idle' });
-      console.log('LOGIN OK');
-    } catch (e) {
+      const tenantId = this.loginConfig?.tenantId ?? 'default';
+      this.tenant.setTenantId(tenantId);
+      await this.router.navigateByUrl('/app/dashboard');
+
+    } catch {
       this.state.set({
         status: 'error',
         errorMessage: 'Login failed.',

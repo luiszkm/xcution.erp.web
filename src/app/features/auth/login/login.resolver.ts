@@ -71,6 +71,7 @@ export const loginResolver: ResolveFn<LoginConfig> = async (route) => {
   } catch {
     // tenant inválido → volta pra default
     await router.navigate(['/login'], { queryParams: {} });
+    tenantContext.setTenantId('default');
 
     const fallback: LoginConfig = {
       tenantId: 'default',

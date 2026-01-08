@@ -69,4 +69,8 @@ export class AuthService {
       // ignore
     }
   }
+  logout(): void {
+    this.clearSession();
+  }
+
 }

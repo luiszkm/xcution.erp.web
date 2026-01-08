@@ -9,3 +9,6 @@ export * from './tenant/tenant.models';
 export * from './auth/auth.models';
 export * from './auth/auth.store';
 export * from './auth/auth.tokens';
+
+export * from './navigation/navigation.models';
+export * from './navigation/navigation.service';
