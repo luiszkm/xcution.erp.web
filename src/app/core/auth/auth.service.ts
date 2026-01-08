@@ -4,11 +4,13 @@ import { inject, Injectable } from '@angular/core';
 import type { AuthUser } from './auth.models';
 import { AuthStore } from './auth.store';
 import { ACCESS_TOKEN_STORAGE_KEY } from './auth.tokens';
+import {TenantContextService} from '../tenant/tenant-context.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly store = inject(AuthStore);
   private readonly tokenKey = inject(ACCESS_TOKEN_STORAGE_KEY);
+  private readonly tenant = inject(TenantContextService);
 
   /**
    * Call once on app startup if you want to restore session from storage.
@@ -17,6 +19,7 @@ export class AuthService {
   initFromStorage(): void {
     const token = this.safeGetToken();
     if (!token) return;
+    const tenantId = this.tenant.tenantId() ?? 'default';
 
     // Minimal session until /me exists
     this.store.setSession(
@@ -25,7 +28,7 @@ export class AuthService {
         name: 'Restored session',
         email: 'restored@local',
         roles: ['User'],
-        tenantId: 'default',
+        tenantId,
       },
       token
     );

@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../core/auth/auth.service';
+import { TenantContextService } from '../core';
 
 @Component({
   standalone: true,
@@ -9,29 +10,24 @@ import { AuthService } from '../core/auth/auth.service';
   template: `
     <header class="header">
       <div class="brand">ERP</div>
-
       <button type="button" (click)="logout()">Logout</button>
     </header>
   `,
-  styles: [
-    `
-      .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        border-bottom: 1px solid #e5e7eb;
-      }
-      .brand { font-weight: 600; }
-    `,
-  ],
 })
 export class AppHeaderComponent {
   private readonly auth = inject(AuthService);
+  private readonly tenant = inject(TenantContextService);
   private readonly router = inject(Router);
 
-  logout(): void {
+  async logout(): Promise<void> {
+    const tenantId = this.tenant.tenantId();
+
     this.auth.logout();
-    void this.router.navigateByUrl('/login');
+    this.tenant.clear();
+
+    await this.router.navigate(['/login'], {
+      queryParams: tenantId ? { tenantId } : {},
+      queryParamsHandling: '',
+    });
   }
 }
